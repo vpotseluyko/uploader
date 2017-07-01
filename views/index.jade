@@ -1,0 +1,48 @@
+extends layout
+
+block content
+    h1= title
+    p Welcome to #{title}
+    div#progress
+    form(action='/upload', method='post', enctype='multipart/form-data' name='upload')
+        input(type='file' name='file')
+        button(type='submit') Send
+    script.
+        document.forms.upload.onsubmit = upload;
+        function upload(e) {
+            e.preventDefault();
+            var xhr = new XMLHttpRequest();
+            var boundary = String(Math.random()).slice(2);
+            var boundaryMiddle = '--' + boundary + '\r\n';
+            var boundaryLast = '--' + boundary + '--\r\n';
+            var body = ['\r\n'];
+
+            // обработчик для закачки
+            var locked = false;
+            xhr.upload.onprogress = function (event) {
+                if (!locked) {
+
+                    locked = true;
+                    setTimeout(function () {
+
+                        document.getElementById('progress').innerHTML =
+                            (+event.loaded / +event.total * 100).toString() + "%";
+                        locked = false;
+                    });
+                }
+            }
+
+            // обработчики успеха и ошибки
+            // если status == 200, то это успех, иначе ошибка
+            xhr.onload = xhr.onerror = function () {
+                if (this.status == 200) {
+                    alert("success");
+                } else {
+                    alert("error " + this.status);
+                }
+            };
+
+            xhr.open("POST", "/upload", true);
+
+            xhr.send(new FormData(document.forms.upload));
+        }
